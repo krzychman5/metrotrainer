@@ -995,6 +995,13 @@ footer {
   text-align: center;
 }
 
+.creator-credit {
+  display: block;
+  margin-top: 7px;
+  color: #b0b5ac;
+  font-size: 9px;
+}
+
 .toast {
   position: fixed;
   z-index: 5;
