@@ -100,7 +100,7 @@ const translations = {
     importFailed: "Der Übeverlauf konnte nicht wiederhergestellt werden.",
     localDataNote: "Sessions liegen unverschlüsselt in diesem Browser. Exportdateien sicher aufbewahren; Duplikate werden übersprungen.",
     footer: "Mit Ruhe üben. Schritt für Schritt.",
-    creatorCredit: "Von mir entwickelt",
+    creatorCredit: "Von Krzychman5",
     beatTrackAria: "Takt: {count} Schläge",
     pyramidProgress: "Stufe {stage}/{total} · {subdivision} · Takt {bar}/4",
     quarter: "Viertel",
