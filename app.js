@@ -55,7 +55,7 @@ const translations = {
     resume: "Fortsetzen",
     pause: "Pause",
     end: "Beenden",
-    metronomeHelper: "Erster Schlag betont · Unterteilungen klingen leiser.",
+    metronomeHelper: "Tempo, Taktart und Unterteilung sind auch während der Wiedergabe änderbar · Erster Schlag betont · Unterteilungen leiser.",
     sessionEyebrow: "KONZENTRIERTE ZEIT",
     sessionTitle: "Übesession",
     defaultSessionName: "Übesession",
@@ -172,7 +172,7 @@ const translations = {
     resume: "Resume",
     pause: "Pause",
     end: "End",
-    metronomeHelper: "The first beat is accented · subdivisions are quieter.",
+    metronomeHelper: "Tempo, meter, and subdivision can be changed during playback · the first beat is accented · subdivisions are quieter.",
     sessionEyebrow: "FOCUSED PRACTICE",
     sessionTitle: "Practice session",
     defaultSessionName: "Practice session",
@@ -548,9 +548,9 @@ function renderExerciseControls() {
   const exercise = exerciseSelect.value;
   const isFixedSubdivision = exercise === "pyramid" || exercise in FIXED_EXERCISE_SUBDIVISIONS;
   exerciseDescription.textContent = EXERCISE_DESCRIPTIONS[exercise] || EXERCISE_DESCRIPTIONS.free;
-  exerciseSelect.disabled = sessionState !== "idle" || sessionStartPending;
+  exerciseSelect.disabled = sessionStartPending;
   subdivisionSelect.disabled =
-    isFixedSubdivision || sessionState !== "idle" || sessionStartPending;
+    isFixedSubdivision || sessionStartPending;
   if (isFixedSubdivision && exercise !== "pyramid") {
     subdivisionSelect.value = String(FIXED_EXERCISE_SUBDIVISIONS[exercise]);
   }
@@ -1140,6 +1140,7 @@ exerciseSelect.addEventListener("change", () => {
   exerciseBarsCompleted = 0;
   nextBeat = 0;
   nextSubdivision = 0;
+  if (sessionState !== "idle") activeSessionExercise = exerciseSelect.value;
   renderExerciseControls();
   if (metronomeRunning && audioContext) nextBeatTime = audioContext.currentTime + 0.03;
 });
