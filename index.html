@@ -69,6 +69,20 @@
               <div class="slider-labels"><span>30</span><span>240 BPM</span></div>
             </div>
 
+            <label class="exercise-control" for="exercise-select">
+              <span>Übung</span>
+              <select id="exercise-select" aria-describedby="exercise-description exercise-progress">
+                <option value="free" selected>Freies Üben</option>
+                <option value="pyramid">Rhythmuspyramide</option>
+                <option value="eighth">Achtel-Flow</option>
+                <option value="triplets">Triolen-Flow</option>
+                <option value="sixteenths">Sechzehntel-Flow</option>
+                <option value="accent-shift">Akzentwechsel</option>
+              </select>
+            </label>
+            <p class="exercise-description" id="exercise-description" aria-live="polite">Eigene Unterteilung wählen.</p>
+            <p class="exercise-progress" id="exercise-progress" aria-live="polite" hidden></p>
+
             <div class="metronome-controls">
               <label class="meter-control" for="meter-select">
                 <span>Taktart</span>
@@ -79,12 +93,21 @@
                   <option value="6/8">6/8</option>
                 </select>
               </label>
+              <label class="meter-control" for="subdivision-select">
+                <span>Unterteilung</span>
+                <select id="subdivision-select">
+                  <option value="1" selected>Keine</option>
+                  <option value="2">Achtel</option>
+                  <option value="3">Triolen</option>
+                  <option value="4">Sechzehntel</option>
+                </select>
+              </label>
               <button class="button button-primary metronome-toggle" id="metronome-toggle" type="button">
                 <span class="button-icon" id="metronome-button-icon" aria-hidden="true">▶</span>
                 <span id="metronome-button-text">Metronom starten</span>
               </button>
             </div>
-            <p class="helper-text">Der erste Schlag jedes Takts wird betont.</p>
+            <p class="helper-text">Erster Schlag betont · Unterteilungen klingen leiser.</p>
           </section>
 
           <section class="card session-card" aria-labelledby="session-title">
@@ -95,6 +118,11 @@
               </div>
               <span class="session-symbol" aria-hidden="true">◷</span>
             </div>
+
+            <label class="session-name-control" for="session-name">
+              <span>Sessionname</span>
+              <input id="session-name" type="text" value="Übesession" maxlength="60" autocomplete="off" />
+            </label>
 
             <label class="duration-control" for="session-duration">
               <span>Übedauer</span>

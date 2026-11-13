@@ -17,6 +17,11 @@ Musiker:innen und Lernende, die ein schnell erreichbares Metronom für ihr tägl
 - Ein klar erkennbarer Start-/Stopp-Schalter steuert den Takt.
 - Der erste Schlag eines Takts ist akustisch oder visuell hervorgehoben.
 - Taktart und Schläge pro Takt lassen sich einstellen.
+- Schläge lassen sich in Achtel, Triolen oder Sechzehntel unterteilen; Zwischenklicks sind leiser als der Grundschlag.
+- Voreingestellte Übungen umfassen Rhythmuspyramide, Achtel-, Triolen- und Sechzehntel-Flow sowie Akzentwechsel.
+- Die Rhythmuspyramide wechselt alle vier Takte von Vierteln über Achtel und Triolen zu Sechzehnteln und anschließend zurück.
+- Voreingestellte Übungen führen durch die Rhythmuspyramide, gleichmäßige Achtel, Triolen und Sechzehntel sowie wechselnde Akzente.
+- Die Rhythmuspyramide wechselt alle vier Takte die Unterteilung und führt von Vierteln über Achtel und Triolen zu Sechzehnteln und zurück.
 - Die Oberfläche zeigt den aktuellen Schlag und gibt ein deutliches Taktsignal.
 - Das Metronom funktioniert auch auf schmalen Bildschirmen.
 
@@ -31,7 +36,7 @@ Musiker:innen und Lernende, die ein schnell erreichbares Metronom für ihr tägl
 ### Lokal gespeicherte Sessions (vorgesehen)
 
 - Beendete Sessions können auf dem Gerät gespeichert werden, ohne Benutzerkonto oder Server.
-- Ein Eintrag enthält mindestens Datum, Dauer und BPM; optionale Angaben wie Instrument, Stück oder Notizen können ergänzt werden.
+- Ein Eintrag enthält den frei wählbaren Sessionnamen (Standard: „Übesession“), Datum, Dauer und BPM.
 - Eine einfache Übersicht zeigt vergangene Sessions und die insgesamt geübte Zeit.
 - Einträge können gelöscht werden.
 - Die App weist verständlich darauf hin, dass lokale Daten an den verwendeten Browser und das Gerät gebunden sind.
@@ -49,7 +54,7 @@ Musiker:innen und Lernende, die ein schnell erreichbares Metronom für ihr tägl
 
 ### Erste Version (MVP)
 
-1. BPM einstellen und Metronom starten/stoppen.
+1. BPM einstellen, Unterteilung oder Rhythmusübung wählen und Metronom starten/stoppen.
 2. Taktart wählen und den ersten Schlag eines Takts hervorheben.
 3. Übesession starten, pausieren und beenden.
 4. Abgeschlossene Sessions lokal speichern und als einfache Liste anzeigen.

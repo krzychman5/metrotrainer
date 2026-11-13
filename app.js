@@ -3,16 +3,37 @@ const MIN_BPM = 30;
 const MAX_BPM = 240;
 const SCHEDULER_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_SECONDS = 0.12;
+const DEFAULT_SESSION_NAME = "Übesession";
+const PYRAMID_SUBDIVISIONS = [1, 2, 3, 4, 3, 2];
+const SUBDIVISION_NAMES = ["Viertel", "Achtel", "Triolen", "Sechzehntel"];
+const FIXED_EXERCISE_SUBDIVISIONS = {
+  eighth: 2,
+  triplets: 3,
+  sixteenths: 4,
+};
+const EXERCISE_DESCRIPTIONS = {
+  free: "Eigene Unterteilung wählen.",
+  pyramid: "Je vier Takte: Viertel → Achtel → Triolen → Sechzehntel und zurück.",
+  eighth: "Gleichmäßige Achtel auf jedem Schlag.",
+  triplets: "Drei gleichmäßige Klicks pro Schlag.",
+  sixteenths: "Vier gleichmäßige Klicks pro Schlag.",
+  "accent-shift": "Der Akzent wandert nach jedem Takt um einen Schlag weiter.",
+};
 
 const tempoInput = document.querySelector("#tempo-input");
 const tempoSlider = document.querySelector("#tempo-slider");
 const meterSelect = document.querySelector("#meter-select");
+const subdivisionSelect = document.querySelector("#subdivision-select");
+const exerciseSelect = document.querySelector("#exercise-select");
+const exerciseDescription = document.querySelector("#exercise-description");
+const exerciseProgress = document.querySelector("#exercise-progress");
 const beatTrack = document.querySelector("#beat-track");
 const metronomeToggle = document.querySelector("#metronome-toggle");
 const metronomeStatus = document.querySelector("#metronome-status");
 const metronomeStatusText = document.querySelector("#metronome-status-text");
 const metronomeButtonText = document.querySelector("#metronome-button-text");
 const metronomeButtonIcon = document.querySelector("#metronome-button-icon");
+const sessionNameInput = document.querySelector("#session-name");
 const sessionDurationInput = document.querySelector("#session-duration");
 const sessionTimer = document.querySelector("#session-timer");
 const sessionCaption = document.querySelector("#session-caption");
@@ -27,12 +48,15 @@ let metronomeRunning = false;
 let schedulerId;
 let nextBeatTime = 0;
 let nextBeat = 0;
+let nextSubdivision = 0;
+let exerciseBarsCompleted = 0;
 let beatHighlightTimeout;
 let sessionStartedAt = 0;
 let sessionDurationMs = 15 * 60_000;
 let sessionRemainingMs = sessionDurationMs;
 let sessionState = "idle";
 let sessionStartPending = false;
+let activeSessionName = DEFAULT_SESSION_NAME;
 let sessionIntervalId;
 let toastTimeout;
 let sessions = loadSessions();
@@ -53,33 +77,88 @@ function setTempo(value, { restoreOnInvalid = false } = {}) {
   tempoInput.value = String(tempo);
   tempoSlider.value = String(tempo);
   tempoSlider.style.setProperty("--progress", `${((tempo - MIN_BPM) / (MAX_BPM - MIN_BPM)) * 100}%`);
-  if (metronomeRunning && audioContext) nextBeatTime = audioContext.currentTime + 0.03;
+  if (metronomeRunning && audioContext) {
+    nextSubdivision = 0;
+    nextBeatTime = audioContext.currentTime + 0.03;
+  }
 }
 
 function renderBeats() {
   const count = Number(meterSelect.value.split("/")[0]);
+  const accentBeat = getAccentBeat();
   beatTrack.replaceChildren();
   beatTrack.setAttribute("aria-label", `Takt: ${count} Schläge`);
   for (let index = 0; index < count; index += 1) {
     const indicator = document.createElement("span");
-    indicator.className = `beat-indicator${index === 0 ? " accent" : ""}`;
+    indicator.className = `beat-indicator${index === accentBeat ? " accent" : ""}`;
     indicator.dataset.beat = String(index);
     beatTrack.append(indicator);
   }
 }
 
-function playClick(time, accented) {
+function getCurrentSubdivisionCount() {
+  if (exerciseSelect.value === "pyramid") {
+    const stage = Math.floor(exerciseBarsCompleted / 4) % PYRAMID_SUBDIVISIONS.length;
+    return PYRAMID_SUBDIVISIONS[stage];
+  }
+  return FIXED_EXERCISE_SUBDIVISIONS[exerciseSelect.value] || Number(subdivisionSelect.value);
+}
+
+function getAccentBeat() {
+  if (exerciseSelect.value === "accent-shift") {
+    return exerciseBarsCompleted % Number(meterSelect.value.split("/")[0]);
+  }
+  return 0;
+}
+
+function updateBeatAccents() {
+  const accentBeat = getAccentBeat();
+  beatTrack.querySelectorAll(".beat-indicator").forEach((indicator) => {
+    indicator.classList.toggle("accent", Number(indicator.dataset.beat) === accentBeat);
+  });
+}
+
+function updateExerciseProgress() {
+  if (exerciseSelect.value !== "pyramid") {
+    exerciseProgress.hidden = true;
+    exerciseProgress.textContent = "";
+    return;
+  }
+  const stage = Math.floor(exerciseBarsCompleted / 4) % PYRAMID_SUBDIVISIONS.length;
+  const bar = (exerciseBarsCompleted % 4) + 1;
+  exerciseProgress.hidden = false;
+  exerciseProgress.textContent =
+    `Stufe ${stage + 1}/${PYRAMID_SUBDIVISIONS.length} · ${SUBDIVISION_NAMES[PYRAMID_SUBDIVISIONS[stage] - 1]} · Takt ${bar}/4`;
+  subdivisionSelect.value = String(PYRAMID_SUBDIVISIONS[stage]);
+}
+
+function renderExerciseControls() {
+  const exercise = exerciseSelect.value;
+  const isFixedSubdivision = exercise === "pyramid" || exercise in FIXED_EXERCISE_SUBDIVISIONS;
+  exerciseDescription.textContent = EXERCISE_DESCRIPTIONS[exercise] || EXERCISE_DESCRIPTIONS.free;
+  exerciseSelect.disabled = sessionState !== "idle" || sessionStartPending;
+  subdivisionSelect.disabled =
+    isFixedSubdivision || sessionState !== "idle" || sessionStartPending;
+  if (isFixedSubdivision && exercise !== "pyramid") {
+    subdivisionSelect.value = String(FIXED_EXERCISE_SUBDIVISIONS[exercise]);
+  }
+  updateExerciseProgress();
+  updateBeatAccents();
+}
+
+function playClick(time, accented, isSubdivision) {
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
   oscillator.type = "sine";
-  oscillator.frequency.value = accented ? 1250 : 830;
+  oscillator.frequency.value = accented ? 1250 : isSubdivision ? 560 : 830;
+  const clickDuration = isSubdivision ? 0.035 : 0.05;
   gain.gain.setValueAtTime(0.0001, time);
-  gain.gain.exponentialRampToValueAtTime(accented ? 0.28 : 0.16, time + 0.004);
-  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.045);
+  gain.gain.exponentialRampToValueAtTime(accented ? 0.28 : isSubdivision ? 0.08 : 0.16, time + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + clickDuration - 0.005);
   oscillator.connect(gain);
   gain.connect(audioContext.destination);
   oscillator.start(time);
-  oscillator.stop(time + 0.05);
+  oscillator.stop(time + clickDuration);
 }
 
 function showBeat(index, time) {
@@ -97,11 +176,21 @@ function showBeat(index, time) {
 
 function scheduleBeats() {
   while (nextBeatTime < audioContext.currentTime + SCHEDULE_AHEAD_SECONDS) {
-    const beatInBar = nextBeat;
-    playClick(nextBeatTime, beatInBar === 0);
-    showBeat(beatInBar, nextBeatTime);
-    nextBeat = (nextBeat + 1) % Number(meterSelect.value.split("/")[0]);
-    nextBeatTime += 60 / Number(tempoInput.value);
+    const subdivisionsPerBeat = getCurrentSubdivisionCount();
+    const isMainBeat = nextSubdivision === 0;
+    playClick(nextBeatTime, isMainBeat && nextBeat === getAccentBeat(), !isMainBeat);
+    if (isMainBeat) showBeat(nextBeat, nextBeatTime);
+    nextSubdivision += 1;
+    if (nextSubdivision >= subdivisionsPerBeat) {
+      nextSubdivision = 0;
+      nextBeat = (nextBeat + 1) % Number(meterSelect.value.split("/")[0]);
+      if (nextBeat === 0) {
+        exerciseBarsCompleted += 1;
+        updateExerciseProgress();
+        updateBeatAccents();
+      }
+    }
+    nextBeatTime += 60 / Number(tempoInput.value) / subdivisionsPerBeat;
   }
 }
 
@@ -124,6 +213,7 @@ async function startMetronomeAudio() {
 
 function renderSessionControls() {
   const isActive = sessionState !== "idle";
+  sessionNameInput.disabled = isActive || sessionStartPending;
   sessionDurationInput.disabled = isActive || sessionStartPending;
   metronomeToggle.disabled = sessionStartPending;
   sessionPauseButton.disabled = sessionStartPending;
@@ -138,6 +228,7 @@ function renderSessionControls() {
   metronomeButtonText.textContent =
     sessionState === "running" ? "Session beenden" : sessionState === "paused" ? "Fortsetzen" : "Metronom starten";
   metronomeButtonIcon.textContent = sessionState === "running" ? "■" : "▶";
+  renderExerciseControls();
 }
 
 function stopMetronomeAudio() {
@@ -184,12 +275,17 @@ async function startSession() {
   sessionStartPending = true;
   renderSessionControls();
   nextBeat = 0;
+  nextSubdivision = 0;
+  exerciseBarsCompleted = 0;
+  updateExerciseProgress();
   const audioStarted = await startMetronomeAudio();
   sessionStartPending = false;
   if (!audioStarted) {
     renderSessionControls();
     return;
   }
+  activeSessionName = sessionNameInput.value.trim() || DEFAULT_SESSION_NAME;
+  sessionNameInput.value = activeSessionName;
   sessionDurationMs = durationMinutes * 60_000;
   sessionRemainingMs = sessionDurationMs;
   sessionState = "running";
@@ -254,6 +350,7 @@ function endSession(completed = false) {
     const session = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       date: new Date().toISOString(),
+      name: activeSessionName,
       durationSeconds,
       bpm: Number(tempoInput.value),
       meter: meterSelect.value,
@@ -282,7 +379,12 @@ function loadSessions() {
       Number.isFinite(session.durationSeconds) &&
       Number.isFinite(session.bpm) &&
       typeof session.meter === "string"
-    );
+    ).map((session) => ({
+      ...session,
+      name: typeof session.name === "string" && session.name.trim()
+        ? session.name
+        : DEFAULT_SESSION_NAME,
+    }));
   } catch (error) {
     window.setTimeout(() => showToast("Der gespeicherte Übeverlauf konnte nicht geladen werden."), 0);
     console.error("Übeverlauf konnte nicht geladen werden:", error);
@@ -344,13 +446,16 @@ function renderHistory() {
     icon.textContent = "♫";
 
     const details = document.createElement("div");
+    const name = document.createElement("span");
+    name.className = "history-session-name";
+    name.textContent = session.name || DEFAULT_SESSION_NAME;
     const date = document.createElement("span");
-    date.className = "history-date";
+    date.className = "history-meta";
     date.textContent = dateFormatter.format(new Date(session.date));
     const meta = document.createElement("span");
     meta.className = "history-meta";
     meta.textContent = `${session.bpm} BPM · ${session.meter}`;
-    details.append(date, meta);
+    details.append(name, date, meta);
 
     const duration = document.createElement("span");
     duration.className = "history-duration";
@@ -360,7 +465,10 @@ function renderHistory() {
     deleteButton.className = "delete-session";
     deleteButton.type = "button";
     deleteButton.dataset.sessionId = session.id;
-    deleteButton.setAttribute("aria-label", `Session vom ${dateFormatter.format(new Date(session.date))} löschen`);
+    deleteButton.setAttribute(
+      "aria-label",
+      `${session.name || DEFAULT_SESSION_NAME} vom ${dateFormatter.format(new Date(session.date))} löschen`
+    );
     deleteButton.textContent = "×";
 
     row.append(icon, details, duration, deleteButton);
@@ -387,7 +495,21 @@ document.querySelector("#tempo-down").addEventListener("click", () => setTempo(N
 document.querySelector("#tempo-up").addEventListener("click", () => setTempo(Number(tempoInput.value) + 1));
 meterSelect.addEventListener("change", () => {
   nextBeat = 0;
+  nextSubdivision = 0;
+  if (metronomeRunning && audioContext) nextBeatTime = audioContext.currentTime + 0.03;
   renderBeats();
+  renderExerciseControls();
+});
+subdivisionSelect.addEventListener("change", () => {
+  nextSubdivision = 0;
+  if (metronomeRunning && audioContext) nextBeatTime = audioContext.currentTime + 0.03;
+});
+exerciseSelect.addEventListener("change", () => {
+  exerciseBarsCompleted = 0;
+  nextBeat = 0;
+  nextSubdivision = 0;
+  renderExerciseControls();
+  if (metronomeRunning && audioContext) nextBeatTime = audioContext.currentTime + 0.03;
 });
 metronomeToggle.addEventListener("click", () => {
   if (sessionState === "running") endSession();
