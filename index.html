@@ -7,6 +7,7 @@
     <meta
       name="description"
       content="Ein einfaches Metronom mit Übesession-Timer und lokalem Trainingsverlauf."
+      id="page-description"
     />
     <title>Taktgefühl – Metronom</title>
     <link rel="stylesheet" href="styles.css" />
@@ -15,7 +16,7 @@
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Taktgefühl Startseite">
+        <a class="brand" href="#" aria-label="Taktgefühl Startseite" data-i18n-aria-label="brandHome">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 36 36" fill="none">
               <path d="M18 5v26M9 10l18 16M27 10 9 26" />
@@ -25,26 +26,32 @@
           </span>
           <span>Taktgefühl</span>
         </a>
-        <span class="privacy-note"><span class="privacy-dot"></span> Alles bleibt auf diesem Gerät</span>
+        <div class="topbar-tools">
+          <select id="language-select" aria-label="Sprache auswählen" data-i18n-aria-label="languageSelect">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+          </select>
+          <span class="privacy-note"><span class="privacy-dot"></span><span data-i18n="privacyNote">Alles bleibt auf diesem Gerät</span></span>
+        </div>
       </header>
 
       <main>
         <section class="intro" aria-labelledby="page-title">
-          <p class="eyebrow">DEIN RAUM ZUM ÜBEN</p>
-          <h1 id="page-title">Finde deinen <span>Takt.</span></h1>
-          <p class="intro-copy">Ein klarer Beat. Ein bisschen Zeit für dich. Los geht’s.</p>
+          <p class="eyebrow" data-i18n="heroEyebrow">DEIN RAUM ZUM ÜBEN</p>
+          <h1 id="page-title"><span data-i18n="heroTitleStart">Finde deinen</span> <span class="hero-title-accent" data-i18n="heroTitleEnd">Takt.</span></h1>
+          <p class="intro-copy" data-i18n="heroCopy">Ein klarer Beat. Ein bisschen Zeit für dich. Los geht’s.</p>
         </section>
 
         <div class="practice-grid">
           <section class="card metronome-card" aria-labelledby="metronome-title">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">METRONOM</p>
-                <h2 id="metronome-title">Dein Tempo</h2>
+                <p class="eyebrow" data-i18n="metronomeEyebrow">METRONOM</p>
+                <h2 id="metronome-title" data-i18n="metronomeTitle">Dein Tempo</h2>
               </div>
               <span class="live-status" id="metronome-status">
                 <span class="status-dot"></span>
-                <span id="metronome-status-text">Bereit</span>
+                <span id="metronome-status-text" data-i18n="statusReady">Bereit</span>
               </span>
             </div>
 
@@ -56,36 +63,44 @@
             </div>
 
             <div class="tempo-display">
-              <button class="step-button" id="tempo-down" type="button" aria-label="Tempo um 1 BPM verringern">−</button>
+              <button class="step-button" id="tempo-down" type="button" aria-label="Tempo um 1 BPM verringern" data-i18n-aria-label="tempoDown">−</button>
               <label class="tempo-value" for="tempo-input">
-                <input id="tempo-input" type="number" min="30" max="240" value="80" inputmode="numeric" aria-label="Tempo in BPM" />
+                <input id="tempo-input" type="number" min="30" max="240" value="80" inputmode="numeric" aria-label="Tempo in BPM" data-i18n-aria-label="tempoInput" />
                 <span class="tempo-unit">BPM</span>
               </label>
-              <button class="step-button" id="tempo-up" type="button" aria-label="Tempo um 1 BPM erhöhen">+</button>
+              <button class="step-button" id="tempo-up" type="button" aria-label="Tempo um 1 BPM erhöhen" data-i18n-aria-label="tempoUp">+</button>
             </div>
 
             <div class="tempo-slider-wrap">
-              <input id="tempo-slider" class="tempo-slider" type="range" min="30" max="240" value="80" aria-label="Tempo einstellen" />
+              <input id="tempo-slider" class="tempo-slider" type="range" min="30" max="240" value="80" aria-label="Tempo einstellen" data-i18n-aria-label="tempoSlider" />
               <div class="slider-labels"><span>30</span><span>240 BPM</span></div>
             </div>
 
+            <label class="volume-control" for="volume-slider">
+              <span data-i18n="volumeLabel">Lautstärke</span>
+              <span class="volume-slider-wrap">
+                <input id="volume-slider" type="range" min="0" max="100" value="100" aria-label="Klicklautstärke" data-i18n-aria-label="volumeLabel" />
+                <output id="volume-value" for="volume-slider">100%</output>
+              </span>
+            </label>
+
             <label class="exercise-control" for="exercise-select">
-              <span>Übung</span>
+              <span data-i18n="exerciseLabel">Übung</span>
               <select id="exercise-select" aria-describedby="exercise-description exercise-progress">
-                <option value="free" selected>Freies Üben</option>
-                <option value="pyramid">Rhythmuspyramide</option>
-                <option value="eighth">Achtel-Flow</option>
-                <option value="triplets">Triolen-Flow</option>
-                <option value="sixteenths">Sechzehntel-Flow</option>
-                <option value="accent-shift">Akzentwechsel</option>
+                <option value="free" selected data-i18n="exerciseFree">Freies Üben</option>
+                <option value="pyramid" data-i18n="exercisePyramid">Rhythmuspyramide</option>
+                <option value="eighth" data-i18n="exerciseEighth">Achtel-Flow</option>
+                <option value="triplets" data-i18n="exerciseTriplets">Triolen-Flow</option>
+                <option value="sixteenths" data-i18n="exerciseSixteenths">Sechzehntel-Flow</option>
+                <option value="accent-shift" data-i18n="exerciseAccentShift">Akzentwechsel</option>
               </select>
             </label>
-            <p class="exercise-description" id="exercise-description" aria-live="polite">Eigene Unterteilung wählen.</p>
+            <p class="exercise-description" id="exercise-description" aria-live="polite" data-i18n="exerciseDescriptionFree">Eigene Unterteilung wählen.</p>
             <p class="exercise-progress" id="exercise-progress" aria-live="polite" hidden></p>
 
             <div class="metronome-controls">
               <label class="meter-control" for="meter-select">
-                <span>Taktart</span>
+                <span data-i18n="meterLabel">Taktart</span>
                 <select id="meter-select">
                   <option value="2/4">2/4</option>
                   <option value="3/4">3/4</option>
@@ -94,60 +109,94 @@
                 </select>
               </label>
               <label class="meter-control" for="subdivision-select">
-                <span>Unterteilung</span>
+                <span data-i18n="subdivisionLabel">Unterteilung</span>
                 <select id="subdivision-select">
-                  <option value="1" selected>Keine</option>
-                  <option value="2">Achtel</option>
-                  <option value="3">Triolen</option>
-                  <option value="4">Sechzehntel</option>
+                  <option value="1" selected data-i18n="subdivisionNone">Keine</option>
+                  <option value="2" data-i18n="subdivisionEighth">Achtel</option>
+                  <option value="3" data-i18n="subdivisionTriplets">Triolen</option>
+                  <option value="4" data-i18n="subdivisionSixteenths">Sechzehntel</option>
                 </select>
               </label>
               <button class="button button-primary metronome-toggle" id="metronome-toggle" type="button">
                 <span class="button-icon" id="metronome-button-icon" aria-hidden="true">▶</span>
-                <span id="metronome-button-text">Metronom starten</span>
+                <span id="metronome-button-text" data-i18n="startMetronome">Metronom starten</span>
               </button>
             </div>
-            <p class="helper-text">Erster Schlag betont · Unterteilungen klingen leiser.</p>
+            <p class="helper-text" data-i18n="metronomeHelper">Erster Schlag betont · Unterteilungen klingen leiser.</p>
           </section>
 
           <section class="card session-card" aria-labelledby="session-title">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">KONZENTRIERTE ZEIT</p>
-                <h2 id="session-title">Übesession</h2>
+                <p class="eyebrow" data-i18n="sessionEyebrow">KONZENTRIERTE ZEIT</p>
+                <h2 id="session-title" data-i18n="sessionTitle">Übesession</h2>
               </div>
               <span class="session-symbol" aria-hidden="true">◷</span>
             </div>
 
             <label class="session-name-control" for="session-name">
-              <span>Sessionname</span>
+              <span data-i18n="sessionNameLabel">Sessionname</span>
               <input id="session-name" type="text" value="Übesession" maxlength="60" autocomplete="off" />
             </label>
 
             <label class="duration-control" for="session-duration">
-              <span>Übedauer</span>
+              <span data-i18n="durationLabel">Übedauer</span>
               <span class="duration-input-wrap">
                 <input id="session-duration" type="number" min="1" max="240" value="15" inputmode="numeric" aria-describedby="duration-help" />
-                <span>Min.</span>
+                <span data-i18n="minutesShort">Min.</span>
               </span>
             </label>
-            <p class="duration-help" id="duration-help">1 bis 240 Minuten</p>
+            <p class="duration-help" id="duration-help" data-i18n="durationHelp">1 bis 240 Minuten</p>
 
-            <div class="session-timer" id="session-timer" role="timer" aria-label="Verbleibende Übezeit">15:00</div>
-            <p class="session-caption" id="session-caption">Dauer wählen, dann das Metronom starten.</p>
+            <details class="tempo-ramp-settings">
+              <summary data-i18n="tempoRampSummary">Tempo-Steigerung (optional)</summary>
+              <div class="tempo-ramp-body">
+                <label class="tempo-ramp-toggle" for="tempo-ramp-enabled">
+                  <input id="tempo-ramp-enabled" type="checkbox" />
+                  <span data-i18n="tempoRampToggle">Während der Session steigern</span>
+                </label>
+                <fieldset class="tempo-ramp-fields" id="tempo-ramp-fields" disabled>
+                  <label for="tempo-ramp-bars">
+                    <span data-i18n="tempoRampEvery">Alle</span>
+                    <select id="tempo-ramp-bars">
+                      <option value="4" selected data-i18n="barsOption" data-i18n-count="4">4 Takte</option>
+                      <option value="8" data-i18n="barsOption" data-i18n-count="8">8 Takte</option>
+                      <option value="16" data-i18n="barsOption" data-i18n-count="16">16 Takte</option>
+                    </select>
+                  </label>
+                  <label class="tempo-ramp-step-control" for="tempo-ramp-step">
+                    <span data-i18n="tempoRampStepLabel">Steigerung je Schritt</span>
+                    <span class="tempo-ramp-stepper">
+                      <button class="step-button tempo-ramp-step-button" id="tempo-ramp-step-down" type="button" aria-label="BPM-Steigerung verringern" data-i18n-aria-label="tempoRampDown">−</button>
+                      <input id="tempo-ramp-step" type="number" min="1" max="240" value="1" inputmode="numeric" aria-label="BPM-Steigerung pro Schritt" data-i18n-aria-label="tempoRampStepInput" />
+                      <span class="tempo-ramp-step-unit">BPM</span>
+                      <button class="step-button tempo-ramp-step-button" id="tempo-ramp-step-up" type="button" aria-label="BPM-Steigerung erhöhen" data-i18n-aria-label="tempoRampUp">+</button>
+                    </span>
+                  </label>
+                  <label class="tempo-ramp-target" for="tempo-ramp-target">
+                    <span data-i18n="tempoRampTargetLabel">Zieltempo (optional)</span>
+                    <input id="tempo-ramp-target" type="number" min="30" max="240" placeholder="Bis 240 BPM" data-i18n-placeholder="tempoRampTargetPlaceholder" inputmode="numeric" />
+                  </label>
+                </fieldset>
+                <p class="tempo-ramp-hint" data-i18n="tempoRampHint">Ohne Zieltempo endet die Steigerung bei 240 BPM.</p>
+              </div>
+            </details>
+
+            <div class="session-timer" id="session-timer" role="timer" aria-label="Verbleibende Übezeit" data-i18n-aria-label="timerLabel">15:00</div>
+            <p class="session-caption" id="session-caption" data-i18n="sessionCaptionIdle">Dauer wählen, dann das Metronom starten.</p>
 
             <div class="session-actions">
               <button class="button button-secondary" id="session-pause" type="button" hidden>
-                Pause
+                <span data-i18n="pause">Pause</span>
               </button>
               <button class="button button-quiet" id="session-end" type="button" hidden>
-                Beenden
+                <span data-i18n="end">Beenden</span>
               </button>
             </div>
 
             <div class="session-note">
               <span aria-hidden="true">✦</span>
-              <p>Bei 0 stoppt das Metronom automatisch.</p>
+              <p data-i18n="sessionNote">Bei 0 stoppt das Metronom automatisch.</p>
             </div>
           </section>
         </div>
@@ -155,20 +204,25 @@
         <section class="history-section" aria-labelledby="history-title">
           <div class="history-heading">
             <div>
-              <p class="eyebrow">DEIN WEG</p>
-              <h2 id="history-title">Übeverlauf</h2>
+              <p class="eyebrow" data-i18n="historyEyebrow">DEIN WEG</p>
+              <h2 id="history-title" data-i18n="historyTitle">Übeverlauf</h2>
             </div>
             <div class="total-practice">
-              <span class="total-label">Insgesamt geübt</span>
+              <span class="total-label" data-i18n="totalPracticeLabel">Insgesamt geübt</span>
               <strong id="total-practice">0 Min.</strong>
             </div>
           </div>
+          <div class="history-actions">
+            <button class="history-action-button" id="export-sessions" type="button" aria-label="Übeverlauf exportieren" data-i18n-aria-label="exportLabel" data-i18n="exportButton">Exportieren</button>
+            <button class="history-action-button" id="import-sessions-button" type="button" aria-label="Übeverlauf importieren" data-i18n-aria-label="importLabel" data-i18n="importButton">Wiederherstellen</button>
+            <input id="import-sessions-file" type="file" accept=".json,application/json" hidden />
+          </div>
           <div class="history-list" id="history-list" aria-live="polite"></div>
-          <p class="local-data-note">Deine Sessions werden nur in diesem Browser gespeichert.</p>
+          <p class="local-data-note" data-i18n="localDataNote">Deine Sessions werden nur in diesem Browser gespeichert.</p>
         </section>
       </main>
 
-      <footer>Mit Ruhe üben. Schritt für Schritt.</footer>
+      <footer data-i18n="footer">Mit Ruhe üben. Schritt für Schritt.</footer>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>
   </body>
