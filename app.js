@@ -13,9 +13,9 @@ const metronomeStatus = document.querySelector("#metronome-status");
 const metronomeStatusText = document.querySelector("#metronome-status-text");
 const metronomeButtonText = document.querySelector("#metronome-button-text");
 const metronomeButtonIcon = document.querySelector("#metronome-button-icon");
+const sessionDurationInput = document.querySelector("#session-duration");
 const sessionTimer = document.querySelector("#session-timer");
 const sessionCaption = document.querySelector("#session-caption");
-const sessionStartButton = document.querySelector("#session-start");
 const sessionPauseButton = document.querySelector("#session-pause");
 const sessionEndButton = document.querySelector("#session-end");
 const historyList = document.querySelector("#history-list");
@@ -29,7 +29,10 @@ let nextBeatTime = 0;
 let nextBeat = 0;
 let beatHighlightTimeout;
 let sessionStartedAt = 0;
-let elapsedBeforeStart = 0;
+let sessionDurationMs = 15 * 60_000;
+let sessionRemainingMs = sessionDurationMs;
+let sessionState = "idle";
+let sessionStartPending = false;
 let sessionIntervalId;
 let toastTimeout;
 let sessions = loadSessions();
@@ -102,7 +105,7 @@ function scheduleBeats() {
   }
 }
 
-async function startMetronome() {
+async function startMetronomeAudio() {
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) throw new Error("Audio wird von diesem Browser nicht unterstützt.");
@@ -112,26 +115,37 @@ async function startMetronome() {
     nextBeatTime = audioContext.currentTime + 0.05;
     schedulerId = window.setInterval(scheduleBeats, SCHEDULER_INTERVAL_MS);
     scheduleBeats();
-    metronomeToggle.setAttribute("aria-pressed", "true");
-    metronomeStatus.classList.add("is-running");
-    metronomeStatusText.textContent = "Läuft";
-    metronomeButtonText.textContent = "Metronom stoppen";
-    metronomeButtonIcon.textContent = "Ⅱ";
+    return true;
   } catch (error) {
     showToast(error instanceof Error ? error.message : "Das Metronom konnte nicht gestartet werden.");
+    return false;
   }
 }
 
-function stopMetronome() {
+function renderSessionControls() {
+  const isActive = sessionState !== "idle";
+  sessionDurationInput.disabled = isActive || sessionStartPending;
+  metronomeToggle.disabled = sessionStartPending;
+  sessionPauseButton.disabled = sessionStartPending;
+  sessionEndButton.disabled = sessionStartPending;
+  sessionPauseButton.hidden = !isActive;
+  sessionEndButton.hidden = !isActive;
+  sessionPauseButton.textContent = sessionState === "paused" ? "Fortsetzen" : "Pause";
+  metronomeToggle.setAttribute("aria-pressed", String(sessionState === "running"));
+  metronomeStatus.classList.toggle("is-running", sessionState === "running");
+  metronomeStatusText.textContent =
+    sessionState === "running" ? "Läuft" : sessionState === "paused" ? "Pausiert" : "Bereit";
+  metronomeButtonText.textContent =
+    sessionState === "running" ? "Session beenden" : sessionState === "paused" ? "Fortsetzen" : "Metronom starten";
+  metronomeButtonIcon.textContent = sessionState === "running" ? "■" : "▶";
+}
+
+function stopMetronomeAudio() {
   metronomeRunning = false;
   window.clearInterval(schedulerId);
   window.clearTimeout(beatHighlightTimeout);
   beatTrack.querySelectorAll(".beat-indicator").forEach((indicator) => indicator.classList.remove("is-active"));
-  metronomeToggle.setAttribute("aria-pressed", "false");
-  metronomeStatus.classList.remove("is-running");
-  metronomeStatusText.textContent = "Bereit";
-  metronomeButtonText.textContent = "Metronom starten";
-  metronomeButtonIcon.textContent = "▶";
+  renderSessionControls();
 }
 
 function formatTime(totalSeconds) {
@@ -145,47 +159,97 @@ function formatTime(totalSeconds) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function getElapsedMilliseconds() {
-  return elapsedBeforeStart + (sessionStartedAt ? Date.now() - sessionStartedAt : 0);
-}
-
 function updateTimer() {
-  sessionTimer.textContent = formatTime(getElapsedMilliseconds() / 1000);
+  if (sessionState === "running") {
+    const elapsed = Date.now() - sessionStartedAt;
+    sessionRemainingMs = Math.max(0, sessionRemainingMs - elapsed);
+    sessionStartedAt = Date.now();
+    if (sessionRemainingMs === 0) {
+      endSession(true);
+      return;
+    }
+  }
+  sessionTimer.textContent = formatTime(Math.ceil(sessionRemainingMs / 1000));
 }
 
-function startSession() {
+async function startSession() {
+  if (sessionState !== "idle" || sessionStartPending) return;
+  const durationMinutes = Number(sessionDurationInput.value);
+  if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 240) {
+    showToast("Bitte eine Übedauer zwischen 1 und 240 Minuten eingeben.");
+    sessionDurationInput.focus();
+    return;
+  }
+
+  sessionStartPending = true;
+  renderSessionControls();
+  nextBeat = 0;
+  const audioStarted = await startMetronomeAudio();
+  sessionStartPending = false;
+  if (!audioStarted) {
+    renderSessionControls();
+    return;
+  }
+  sessionDurationMs = durationMinutes * 60_000;
+  sessionRemainingMs = sessionDurationMs;
+  sessionState = "running";
   sessionStartedAt = Date.now();
-  sessionIntervalId = window.setInterval(updateTimer, 250);
-  sessionCaption.textContent = "Du bist im Flow. Weiter so.";
-  sessionStartButton.hidden = true;
-  sessionPauseButton.hidden = false;
-  sessionEndButton.hidden = false;
-  sessionPauseButton.textContent = "Pause";
-  sessionPauseButton.dataset.state = "running";
+  sessionIntervalId = window.setInterval(updateTimer, 100);
+  sessionCaption.textContent = "Session läuft — das Metronom stoppt bei 0.";
+  updateTimer();
+  renderSessionControls();
+}
+
+async function resumeSession() {
+  if (sessionState !== "paused" || sessionStartPending) return;
+  sessionStartPending = true;
+  renderSessionControls();
+  const audioStarted = await startMetronomeAudio();
+  sessionStartPending = false;
+  if (!audioStarted) {
+    renderSessionControls();
+    return;
+  }
+  sessionState = "running";
+  sessionStartedAt = Date.now();
+  sessionIntervalId = window.setInterval(updateTimer, 100);
+  sessionCaption.textContent = "Session läuft — das Metronom stoppt bei 0.";
+  renderSessionControls();
 }
 
 function pauseSession() {
-  if (sessionPauseButton.dataset.state === "running") {
-    elapsedBeforeStart += Date.now() - sessionStartedAt;
+  if (sessionState === "running") {
+    sessionRemainingMs = Math.max(0, sessionRemainingMs - (Date.now() - sessionStartedAt));
+    if (sessionRemainingMs === 0) {
+      endSession(true);
+      return;
+    }
     sessionStartedAt = 0;
     window.clearInterval(sessionIntervalId);
-    updateTimer();
+    sessionState = "paused";
+    sessionTimer.textContent = formatTime(Math.ceil(sessionRemainingMs / 1000));
+    stopMetronomeAudio();
     sessionCaption.textContent = "Session pausiert.";
-    sessionPauseButton.textContent = "Fortsetzen";
-    sessionPauseButton.dataset.state = "paused";
-  } else {
-    sessionStartedAt = Date.now();
-    sessionIntervalId = window.setInterval(updateTimer, 250);
-    sessionCaption.textContent = "Du bist im Flow. Weiter so.";
-    sessionPauseButton.textContent = "Pause";
-    sessionPauseButton.dataset.state = "running";
+  } else if (sessionState === "paused") {
+    void resumeSession();
   }
 }
 
-function endSession() {
-  if (sessionStartedAt) elapsedBeforeStart += Date.now() - sessionStartedAt;
+function endSession(completed = false) {
+  if (sessionState === "idle") return;
+  if (sessionState === "running") {
+    sessionRemainingMs = Math.max(0, sessionRemainingMs - (Date.now() - sessionStartedAt));
+    if (sessionRemainingMs === 0) completed = true;
+  }
+  if (completed) sessionRemainingMs = 0;
+  sessionStartedAt = 0;
   window.clearInterval(sessionIntervalId);
-  const durationSeconds = Math.floor(elapsedBeforeStart / 1000);
+  const durationSeconds = Math.floor((sessionDurationMs - sessionRemainingMs) / 1000);
+  sessionState = "idle";
+  stopMetronomeAudio();
+  sessionTimer.textContent = "00:00";
+  sessionCaption.textContent = completed ? "Zeit ist um — gut gemacht!" : "Session beendet.";
+
   if (durationSeconds > 0) {
     const session = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -198,19 +262,11 @@ function endSession() {
     if (saveSessions(updatedSessions)) {
       sessions = updatedSessions;
       renderHistory();
-      showToast("Session gespeichert – gut gemacht!");
+      showToast(completed ? "Zeit ist um — Session gespeichert!" : "Session gespeichert — gut gemacht!");
     }
   } else {
     showToast("Die Session war zu kurz, um gespeichert zu werden.");
   }
-  sessionStartedAt = 0;
-  elapsedBeforeStart = 0;
-  sessionTimer.textContent = "00:00";
-  sessionCaption.textContent = "Bereit, wenn du es bist.";
-  sessionStartButton.hidden = false;
-  sessionPauseButton.hidden = true;
-  sessionEndButton.hidden = true;
-  sessionPauseButton.dataset.state = "running";
 }
 
 function loadSessions() {
@@ -334,12 +390,27 @@ meterSelect.addEventListener("change", () => {
   renderBeats();
 });
 metronomeToggle.addEventListener("click", () => {
-  if (metronomeRunning) stopMetronome();
-  else void startMetronome();
+  if (sessionState === "running") endSession();
+  else if (sessionState === "paused") void resumeSession();
+  else void startSession();
 });
-sessionStartButton.addEventListener("click", startSession);
 sessionPauseButton.addEventListener("click", pauseSession);
-sessionEndButton.addEventListener("click", endSession);
+sessionEndButton.addEventListener("click", () => endSession(false));
+sessionDurationInput.addEventListener("input", () => {
+  const durationMinutes = Number(sessionDurationInput.value);
+  if (Number.isInteger(durationMinutes) && durationMinutes >= 1 && durationMinutes <= 240) {
+    sessionDurationMs = durationMinutes * 60_000;
+    sessionRemainingMs = sessionDurationMs;
+    sessionTimer.textContent = formatTime(durationMinutes * 60);
+  }
+});
+sessionDurationInput.addEventListener("change", () => {
+  const durationMinutes = Number(sessionDurationInput.value);
+  if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 240) {
+    sessionDurationInput.value = String(sessionDurationMs / 60_000);
+    showToast("Bitte eine Übedauer zwischen 1 und 240 Minuten eingeben.");
+  }
+});
 historyList.addEventListener("click", (event) => {
   const button = event.target.closest(".delete-session");
   if (!button) return;
@@ -351,7 +422,7 @@ historyList.addEventListener("click", (event) => {
   }
 });
 window.addEventListener("beforeunload", () => {
-  if (metronomeRunning) stopMetronome();
+  if (metronomeRunning) stopMetronomeAudio();
   window.clearInterval(sessionIntervalId);
 });
 

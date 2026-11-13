@@ -96,13 +96,19 @@
               <span class="session-symbol" aria-hidden="true">◷</span>
             </div>
 
-            <div class="session-timer" id="session-timer" role="timer" aria-label="Übezeit">00:00</div>
-            <p class="session-caption" id="session-caption">Bereit, wenn du es bist.</p>
+            <label class="duration-control" for="session-duration">
+              <span>Übedauer</span>
+              <span class="duration-input-wrap">
+                <input id="session-duration" type="number" min="1" max="240" value="15" inputmode="numeric" aria-describedby="duration-help" />
+                <span>Min.</span>
+              </span>
+            </label>
+            <p class="duration-help" id="duration-help">1 bis 240 Minuten</p>
+
+            <div class="session-timer" id="session-timer" role="timer" aria-label="Verbleibende Übezeit">15:00</div>
+            <p class="session-caption" id="session-caption">Dauer wählen, dann das Metronom starten.</p>
 
             <div class="session-actions">
-              <button class="button button-primary session-main-button" id="session-start" type="button">
-                Session starten
-              </button>
               <button class="button button-secondary" id="session-pause" type="button" hidden>
                 Pause
               </button>
@@ -113,7 +119,7 @@
 
             <div class="session-note">
               <span aria-hidden="true">✦</span>
-              <p>Jede Minute zählt. Bleib in deinem Tempo.</p>
+              <p>Bei 0 stoppt das Metronom automatisch.</p>
             </div>
           </section>
         </div>

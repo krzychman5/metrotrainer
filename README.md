@@ -22,10 +22,11 @@ Musiker:innen und Lernende, die ein schnell erreichbares Metronom für ihr tägl
 
 ### Übesession-Timer
 
-- Eine Session kann gestartet, pausiert, fortgesetzt und beendet werden.
-- Die verstrichene Übezeit ist während der Session sichtbar.
-- Beim Beenden wird die tatsächlich geübte Dauer festgehalten.
-- Der Timer lässt sich unabhängig vom Metronom bedienen; das Metronom kann während einer Session gestartet oder gestoppt werden.
+- Vor einer Session wird die gewünschte Dauer in Minuten eingestellt.
+- Mit dem Start des Metronoms beginnt gleichzeitig der Countdown der Übesession.
+- Der Countdown lässt sich pausieren, fortsetzen und vorzeitig beenden.
+- Bei 0 stoppt das Metronom automatisch und die Session wird gespeichert.
+- Beim vorzeitigen Beenden wird die tatsächlich geübte Dauer festgehalten.
 
 ### Lokal gespeicherte Sessions (vorgesehen)
 
@@ -37,7 +38,7 @@ Musiker:innen und Lernende, die ein schnell erreichbares Metronom für ihr tägl
 
 ## Bedienungs- und Qualitätsanforderungen
 
-- Die wichtigsten Aktionen – Tempo einstellen, Metronom starten und Session starten – sind direkt auf der Hauptansicht erreichbar.
+- Die wichtigsten Aktionen – Tempo und Übedauer einstellen sowie das Metronom starten – sind direkt auf der Hauptansicht erreichbar.
 - Bedienelemente haben verständliche Beschriftungen und ausreichend große Klick- bzw. Touch-Flächen.
 - Statusänderungen wie „läuft“, „pausiert“ und „Session beendet“ sind klar erkennbar.
 - Die App ist per Tastatur bedienbar und berücksichtigt ausreichende Kontraste.
